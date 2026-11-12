@@ -12,5 +12,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "node -e \"const fs = require('fs'); ['dist', 'build', 'coverage'].forEach(d => fs.rmSync(d, { recursive: true, force: true }));\""
-  }
+  },
+  "license": "Apache-2.0"
 }
