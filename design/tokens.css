@@ -1,0 +1,112 @@
+/* Despawn design tokens. Source of truth: docs/UI_DESIGN.md
+   Default theme is the dark amber terminal ("Soot"). The light theme ("Paper")
+   follows the OS setting unless data-theme is set on <html>. */
+
+:root {
+  /* ---- colour: base ---- */
+  --soot: #1a140d;          /* app background */
+  --char: #251d13;          /* raised surface */
+  --ash: #3b2f20;           /* hairlines, decorative dividers only (1.4:1) */
+  --line-strong: #8a7550;   /* control borders, 4.1:1 on soot, 3.7:1 on char */
+  --parchment: #f2e6ce;     /* primary text */
+  --dust: #b8a98a;          /* secondary text */
+  --amber: #ffb000;         /* brand accent, primary actions */
+  --ember: #ff6b57;         /* danger, destroy, revoked */
+  --moss: #8fd18a;          /* success, valid */
+
+  /* ---- colour: semantic (dark) ---- */
+  --bg: var(--soot);
+  --surface: var(--char);
+  --text: var(--parchment);
+  --text-muted: var(--dust);
+  --border: var(--ash);
+  --border-control: var(--line-strong);
+  --accent: var(--amber);
+  --on-accent: var(--soot);
+  --danger: var(--ember);
+  --on-danger: var(--soot);
+  --success: var(--moss);
+  --focus-ring: var(--amber);
+
+  /* ---- type ---- */
+  --font-ui: "JetBrains Mono", "IBM Plex Mono", "Noto Sans Devanagari", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-text: "IBM Plex Mono", "JetBrains Mono", "Noto Sans Devanagari", ui-monospace, Menlo, Consolas, monospace;
+  --fs-xs: 0.75rem;    /* 12 */
+  --fs-sm: 0.875rem;   /* 14 */
+  --fs-md: 1rem;       /* 16 body */
+  --fs-lg: 1.25rem;    /* 20 */
+  --fs-xl: 1.625rem;   /* 26 */
+  --fs-2xl: 2.25rem;   /* 36 */
+  --fs-code: 3.5rem;   /* 56 pairing code */
+  --lh-tight: 1.2;
+  --lh-body: 1.55;
+  --fw-regular: 400;
+  --fw-semibold: 600;
+  --fw-extrabold: 800;
+
+  /* ---- space: 4px grid ---- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px;
+
+  /* ---- shape: stepped (notched) corners instead of round ---- */
+  --notch: 4px;             /* use with .notch clip-path below */
+  --border-w: 2px;
+  --hit-min: 48px;          /* minimum touch target */
+
+  /* ---- motion ---- */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-despawn: 640ms;
+  --ease-step: steps(8, end);          /* pixel-style, used for the despawn dissolve */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---- layers ---- */
+  --z-sheet: 20;
+  --z-takeover: 40;         /* approval screen */
+  --z-toast: 60;
+}
+
+/* Paper: light theme for bright shop counters and outdoor use */
+:root[data-theme="paper"] {
+  --bg: #f7f0e0;
+  --surface: #ede3cc;
+  --text: #1a140d;           /* 16.1:1 on bg */
+  --text-muted: #6b5b3f;     /* 5.8:1 on bg, 5.2:1 on surface */
+  --border: #d6c7a6;
+  --border-control: #7a6747;
+  --accent: #8a5a00;         /* amber as text/icon: 5.2:1 on bg */
+  --on-accent: #ffffff;
+  --danger: #b3321f;         /* 5.5:1 on bg */
+  --on-danger: #ffffff;
+  --success: #276b31;        /* 5.7:1 on bg */
+  --focus-ring: #8a5a00;
+}
+/* Primary button fill stays brand amber in both themes (ink text, 10:1) */
+:root[data-theme="paper"] .btn-primary { background: #ffb000; color: #1a140d; }
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="soot"]):not([data-theme="paper"]) {
+    --bg: #f7f0e0; --surface: #ede3cc; --text: #1a140d; --text-muted: #6b5b3f;
+    --border: #d6c7a6; --border-control: #7a6747; --accent: #8a5a00; --on-accent: #ffffff;
+    --danger: #b3321f; --on-danger: #ffffff; --success: #276b31; --focus-ring: #8a5a00;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-despawn: 0ms; }
+}
+
+/* Notched corners: a 4px staircase cut on each corner, no border-radius */
+.notch {
+  clip-path: polygon(
+    0 var(--notch), var(--notch) var(--notch), var(--notch) 0,
+    calc(100% - var(--notch)) 0, calc(100% - var(--notch)) var(--notch), 100% var(--notch),
+    100% calc(100% - var(--notch)), calc(100% - var(--notch)) calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%, var(--notch) 100%, var(--notch) calc(100% - var(--notch)),
+    0 calc(100% - var(--notch))
+  );
+}
+
+:focus-visible { outline: var(--border-w) solid var(--focus-ring); outline-offset: 2px; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-text); font-size: var(--fs-md); line-height: var(--lh-body); }
+.num { font-family: var(--font-ui); font-variant-numeric: tabular-nums; }
