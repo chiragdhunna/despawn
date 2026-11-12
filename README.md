@@ -68,6 +68,30 @@ TypeScript monorepo. Owner app: installable PWA (React, Vite, WebCrypto, pdf.js)
 
 Burn-after-read tools such as Cryptgeon and BurnLink hand a recipient a note or file that disappears after viewing. Despawn targets a different case: the recipient needs to print, not keep, and the owner stays in the loop live. Check current projects before claiming novelty.
 
+## Development
+
+### Prerequisites
+- Node.js >= 22 (see `.nvmrc`)
+- pnpm 10.x
+
+### Install
+```bash
+pnpm install
+```
+
+### Commands
+- `pnpm build`: Build all packages and applications
+- `pnpm lint`: Lint all workspace code
+- `pnpm format`: Format files using Prettier
+- `pnpm format:check`: Check formatting with Prettier
+- `pnpm typecheck`: Run TypeScript type-checking across workspace
+- `pnpm test`: Run test suites with Vitest
+- `pnpm clean`: Clean build artifacts and caches
+
+### Folders
+- `apps/` contains web applications (`owner` PWA and `viewer` shop interface); `packages/` contains shared protocol, crypto, bundle, render, compose, ui, and server core logic.
+- `adapters/` hosts platform adapters (Node, Cloudflare, AWS); `docs/` and `design/` hold system specifications and visual design tokens.
+
 ## Contributing, security, license
 
 - Contributions welcome once the repo opens for code. Start with the docs and open an issue to discuss.
