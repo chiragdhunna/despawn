@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Coverage and test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+
+# Tool caches
+.wrangler/
+.turbo/
+
+# Review and archives
+_review/
+*.zip
