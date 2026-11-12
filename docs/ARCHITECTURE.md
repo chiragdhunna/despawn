@@ -166,8 +166,10 @@ All primitives come from WebCrypto. No custom primitives.
 | Owner key | Fresh ephemeral ECDH P-256 per approval. |
 | Wrap key `W` | `HKDF-SHA-256(ECDH(ownerPriv, shopPub), salt = sessionId, info = "despawn/v1/wrap" ‖ ownerPub ‖ shopPub)` |
 | Key wrap | `wrappedK = AES-256-GCM(W, nonce12, K, AAD = sessionId ‖ ownerPub ‖ shopPub)` |
-| Release MAC | `mac2 = HMAC-SHA-256(chanKey, "release" ‖ sessionId ‖ ownerPub ‖ shopPub ‖ wrappedK)`. The viewer verifies it before unwrapping. |
+| Release MAC | `mac2 = HMAC-SHA-256(chanKey, "release" ‖ sessionId ‖ ownerPub ‖ shopPub ‖ nonce ‖ wrappedKey)`. The viewer verifies it before unwrapping. |
 | Key import on shop | `K` imported as a non-extractable CryptoKey. This stops casual script access, not a determined user with DevTools (see A2). |
+
+Byte-level encodings, error codes and test vectors are in docs/CRYPTO_SPEC.md, which is authoritative where it is more specific.
 
 **Why a link secret *and* a SAS code?** The link secret authenticates the key exchange against a malicious relay. The SAS code is for the human: it proves the browser asking is the one the owner is looking at, which defeats a forwarded link opened on another machine. Neither alone is enough.
 
