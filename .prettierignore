@@ -1,0 +1,19 @@
+# Build outputs and dependencies
+node_modules
+dist
+build
+coverage
+playwright-report
+test-results
+_review
+*.zip
+
+# Package manager lockfile
+pnpm-lock.yaml
+
+# Protected specifications and assets
+docs/**
+design/**
+assets/**
+AGENTS.md
+README.md
