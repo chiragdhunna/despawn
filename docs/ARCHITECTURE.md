@@ -128,8 +128,8 @@ sequenceDiagram
   O->>O: verify mac with linkSecret, compute SAS
   Note over O,V: Owner compares 4-digit code on phone with shop screen
   O->>O: hold to approve
-  O->>S: approve {ownerPub, nonce, wrappedK, mac2}
-  S->>V: released {ownerPub, nonce, wrappedK, mac2, blobToken}
+  O->>S: approve {ownerPub, nonce, wrappedKey, mac2}
+  S->>V: released {ownerPub, nonce, wrappedKey, mac2, blobToken}
   V->>V: verify mac2, derive wrap key, unwrap K
   V->>S: GET /blob?t=blobToken (one time)
   S-->>V: ciphertext (blob deleted after download)
@@ -165,7 +165,7 @@ All primitives come from WebCrypto. No custom primitives.
 | SAS code | `u32(SHA-256("despawn/v1/sas" ‖ sessionId ‖ shopPub)[0..4]) mod 10000`, shown as 4 digits on both screens. Because `shopPub` is MAC-authenticated, a relay cannot grind a matching code. |
 | Owner key | Fresh ephemeral ECDH P-256 per approval. |
 | Wrap key `W` | `HKDF-SHA-256(ECDH(ownerPriv, shopPub), salt = sessionId, info = "despawn/v1/wrap" ‖ ownerPub ‖ shopPub)` |
-| Key wrap | `wrappedK = AES-256-GCM(W, nonce12, K, AAD = sessionId ‖ ownerPub ‖ shopPub)` |
+| Key wrap | `wrappedKey = AES-256-GCM(W, nonce12, K, AAD = sessionId ‖ ownerPub ‖ shopPub)` |
 | Release MAC | `mac2 = HMAC-SHA-256(chanKey, "release" ‖ sessionId ‖ ownerPub ‖ shopPub ‖ nonce ‖ wrappedKey)`. The viewer verifies it before unwrapping. |
 | Key import on shop | `K` imported as a non-extractable CryptoKey. This stops casual script access, not a determined user with DevTools (see A2). |
 
@@ -253,15 +253,15 @@ Honest limit: JavaScript cannot guarantee memory scrubbing. Garbage collection a
 
 ### 8.3 WebSocket messages
 
-JSON, versioned (`v: 1`), validated with shared Zod schemas.
+JSON, versioned (`v: 1`), validated with shared dependency-free validators. docs/PROTOCOL_SPEC.md is authoritative where it is more specific.
 
 | Direction | Message | Fields |
 |---|---|---|
 | Shop to relay | `hello` | `shopPub`, `mac`, `ua` |
 | Relay to owner | `request` | `reqId`, `shopPub`, `mac`, `ua`, `approxLocation`, `at` |
-| Owner to relay | `approve` | `reqId`, `ownerPub`, `nonce`, `wrappedK`, `mac2` |
+| Owner to relay | `approve` | `reqId`, `ownerPub`, `nonce`, `wrappedKey`, `mac2` |
 | Owner to relay | `deny` / `kill` | `reqId` / none |
-| Relay to shop | `released` | `ownerPub`, `nonce`, `wrappedK`, `mac2`, `blobToken`, `limits` |
+| Relay to shop | `released` | `ownerPub`, `nonce`, `wrappedKey`, `mac2`, `blobToken`, `limits` |
 | Shop to relay | `hb`, `rendered`, `printStarted`, `printed`, `wiped` | `seq`, `state`, `reason` |
 | Relay to shop | `tick` | `ownerAlive`, `remainingMs` |
 | Relay to shop | `kill` | `reason` |
@@ -304,7 +304,7 @@ despawn/
 │  ├─ owner/            # PWA: React, Vite, TypeScript
 │  └─ viewer/           # shop viewer + verify page, tiny
 ├─ packages/
-│  ├─ protocol/         # message schemas (Zod), constants, state machine
+│  ├─ protocol/         # wire formats, validators, constants, state machine
 │  ├─ crypto/           # WebCrypto wrappers, test vectors
 │  ├─ bundle/           # print-bundle encode/decode
 │  ├─ render/           # renderer adapters (run in Workers)

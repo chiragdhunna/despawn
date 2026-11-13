@@ -1,0 +1,177 @@
+{
+  "_comment": "Valid example messages for docs/PROTOCOL_SPEC.md. Every binary field is real base64url of the right length. Do not edit by hand.",
+  "ids": {
+    "sessionId": "AAECAwQFBgcICQoLDA0ODw",
+    "reqId": "8PHy8_T19vf4-fr7_P3-_w",
+    "verifyId": "Dw4NDAsKCQgHBgUEAwIBAA"
+  },
+  "shopToRelay": {
+    "hello": {
+      "v": 1,
+      "t": "hello",
+      "shopPub": "BMn49cFHdOTAIMEeaRePoXPMpy_yjovcUyovd8mgmxVPZhaJzM8NZXtNYQHxrE3HfjVDdN7Qabe9vTYvdoLffmY",
+      "mac": "Vv0H5g3yLMZ4IcI9UAYOIaTL1qi1BbsirUKhluedg34",
+      "ua": {
+        "browser": "Chrome 109",
+        "os": "Windows 7"
+      }
+    },
+    "hb": {
+      "v": 1,
+      "t": "hb",
+      "seq": 7,
+      "state": "READY"
+    },
+    "rendered": {
+      "v": 1,
+      "t": "rendered",
+      "pageCount": 1
+    },
+    "printStarted": {
+      "v": 1,
+      "t": "printStarted"
+    },
+    "printed": {
+      "v": 1,
+      "t": "printed"
+    },
+    "wiped": {
+      "v": 1,
+      "t": "wiped",
+      "reason": "PRINTED"
+    }
+  },
+  "relayToShop": {
+    "released": {
+      "v": 1,
+      "t": "released",
+      "ownerPub": "BM8RA5eKEQSxyNCP4U3ATN1FIW2LXxiLbWAqBN8q66359o0C63Rc3Mf04-gkI4J1Vg_Oe68fH-4w4YqnmP-EzRM",
+      "nonce": "0NHS09TV1tfY2drb",
+      "wrappedKey": "HW-m2MmyU--1L3Sv0G08qECDv-Yz5Z-LGQhvtrABdB0dRJ5rr1qL3mwO5nbqaNxb",
+      "mac2": "IEOVD0fyZ2wG2dL7y3QSCuJrb_wLK_CLlHsHV7FvBWI",
+      "blobToken": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo",
+      "limits": {
+        "liveTtlMs": 120000,
+        "printLimit": 1,
+        "destroyAfterPrint": true,
+        "graceMs": 10000
+      }
+    },
+    "denied": {
+      "v": 1,
+      "t": "denied"
+    },
+    "tick": {
+      "v": 1,
+      "t": "tick",
+      "ownerAlive": true,
+      "remainingMs": 95000
+    },
+    "kill": {
+      "v": 1,
+      "t": "kill",
+      "reason": "OWNER_KILLED"
+    },
+    "error": {
+      "v": 1,
+      "t": "error",
+      "code": "WRONG_STATE"
+    }
+  },
+  "ownerToRelay": {
+    "approve": {
+      "v": 1,
+      "t": "approve",
+      "reqId": "8PHy8_T19vf4-fr7_P3-_w",
+      "ownerPub": "BM8RA5eKEQSxyNCP4U3ATN1FIW2LXxiLbWAqBN8q66359o0C63Rc3Mf04-gkI4J1Vg_Oe68fH-4w4YqnmP-EzRM",
+      "nonce": "0NHS09TV1tfY2drb",
+      "wrappedKey": "HW-m2MmyU--1L3Sv0G08qECDv-Yz5Z-LGQhvtrABdB0dRJ5rr1qL3mwO5nbqaNxb",
+      "mac2": "IEOVD0fyZ2wG2dL7y3QSCuJrb_wLK_CLlHsHV7FvBWI"
+    },
+    "deny": {
+      "v": 1,
+      "t": "deny",
+      "reqId": "8PHy8_T19vf4-fr7_P3-_w"
+    },
+    "kill": {
+      "v": 1,
+      "t": "kill"
+    },
+    "hb": {
+      "v": 1,
+      "t": "hb",
+      "seq": 3
+    }
+  },
+  "relayToOwner": {
+    "request": {
+      "v": 1,
+      "t": "request",
+      "reqId": "8PHy8_T19vf4-fr7_P3-_w",
+      "shopPub": "BMn49cFHdOTAIMEeaRePoXPMpy_yjovcUyovd8mgmxVPZhaJzM8NZXtNYQHxrE3HfjVDdN7Qabe9vTYvdoLffmY",
+      "mac": "Vv0H5g3yLMZ4IcI9UAYOIaTL1qi1BbsirUKhluedg34",
+      "ua": {
+        "browser": "Chrome 109",
+        "os": "Windows 7"
+      },
+      "approxLocation": {
+        "country": "IN",
+        "region": "Maharashtra"
+      },
+      "at": 1794000000000
+    },
+    "status": {
+      "v": 1,
+      "t": "status",
+      "state": "LIVE",
+      "shopSeen": true,
+      "lastHbMs": 800,
+      "printsDone": 0,
+      "remainingMs": 95000,
+      "pending": 0
+    },
+    "destroyed": {
+      "v": 1,
+      "t": "destroyed",
+      "reason": "PRINTED",
+      "at": 1794000125000,
+      "printsDone": 1,
+      "shopReportedWipe": true
+    },
+    "error": {
+      "v": 1,
+      "t": "error",
+      "code": "RATE_LIMITED"
+    }
+  },
+  "http": {
+    "createSessionRequest": {
+      "linkTtlMs": 1800000,
+      "liveTtlMs": 120000,
+      "printLimit": 1,
+      "destroyAfterPrint": true,
+      "graceMs": 10000,
+      "blobBytes": 3145728,
+      "verifyEnabled": false,
+      "challengeToken": "example-challenge-token"
+    },
+    "createSessionResponse": {
+      "sessionId": "AAECAwQFBgcICQoLDA0ODw",
+      "ownerToken": "u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7s",
+      "limits": {
+        "maxBlobBytes": 26214400,
+        "maxPages": 50,
+        "maxFrameBytes": 4096,
+        "maxPendingRequests": 4
+      }
+    },
+    "verifyResponse": {
+      "status": "VALID",
+      "purposeLabel": "SIM verification",
+      "issuedAt": 1794000000000
+    },
+    "errorResponse": {
+      "error": "NOT_FOUND"
+    }
+  }
+}
