@@ -17,3 +17,19 @@ export class CryptoError extends Error {
     Object.setPrototypeOf(this, CryptoError.prototype);
   }
 }
+
+/**
+ * Executes an async operation, rethrowing any CryptoError as-is, and converting
+ * any other thrown error (such as a platform DOMException) into CryptoError('INVALID_INPUT').
+ * Not exported from index.ts.
+ */
+export async function guard<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof CryptoError) {
+      throw err;
+    }
+    throw new CryptoError('INVALID_INPUT');
+  }
+}

@@ -1,5 +1,5 @@
 import { concatBytes, u32be, u64be, utf8 } from './bytes.js';
-import { CryptoError } from './errors.js';
+import { CryptoError, guard } from './errors.js';
 import {
   CHUNK_SIZE,
   FILE_KEY_BYTES,
@@ -34,17 +34,19 @@ export async function importFileKey(
   raw: Uint8Array,
   usage: 'encrypt' | 'decrypt',
 ): Promise<CryptoKey> {
-  if (raw.length !== FILE_KEY_BYTES) {
-    throw new CryptoError('INVALID_INPUT');
-  }
+  return await guard(async () => {
+    if (raw.length !== FILE_KEY_BYTES) {
+      throw new CryptoError('INVALID_INPUT');
+    }
 
-  return await globalThis.crypto.subtle.importKey(
-    'raw',
-    new Uint8Array(raw),
-    { name: 'AES-GCM' },
-    false,
-    [usage],
-  );
+    return await globalThis.crypto.subtle.importKey(
+      'raw',
+      new Uint8Array(raw),
+      { name: 'AES-GCM' },
+      false,
+      [usage],
+    );
+  });
 }
 
 class ChunkEncryptorImpl implements ChunkEncryptor {
@@ -52,6 +54,7 @@ class ChunkEncryptorImpl implements ChunkEncryptor {
   private readonly ctx: ChunkContext;
   private index = 0;
   private isDone = false;
+  private failed = false;
 
   constructor(key: CryptoKey, ctx: ChunkContext) {
     this.key = key;
@@ -70,43 +73,57 @@ class ChunkEncryptorImpl implements ChunkEncryptor {
   }
 
   async seal(plaintext: Uint8Array, isFinal: boolean): Promise<Uint8Array> {
-    if (this.isDone) {
-      throw new CryptoError('AFTER_FINAL');
+    if (this.failed) {
+      throw new CryptoError('INVALID_INPUT');
     }
 
-    if (this.index > 0xffffffff) {
-      throw new CryptoError('INVALID_INPUT');
+    if (this.isDone) {
+      throw new CryptoError('AFTER_FINAL');
     }
 
     if (plaintext.length > CHUNK_SIZE) {
       throw new CryptoError('INVALID_INPUT');
     }
 
-    const chunkNonce = concatBytes(this.ctx.noncePrefix, u64be(this.index));
-    const aad = concatBytes(
-      utf8('despawn/v1'),
-      this.ctx.sessionId,
-      u32be(this.index),
-      new Uint8Array([isFinal ? 1 : 0]),
-    );
+    if (this.index > 0xffffffff) {
+      throw new CryptoError('INVALID_INPUT');
+    }
 
-    const sealed = await globalThis.crypto.subtle.encrypt(
-      {
-        name: 'AES-GCM',
-        iv: new Uint8Array(chunkNonce),
-        additionalData: new Uint8Array(aad),
-        tagLength: 128,
-      },
-      this.key,
-      new Uint8Array(plaintext),
-    );
-
+    const index = this.index;
     this.index++;
     if (isFinal) {
       this.isDone = true;
     }
 
-    return new Uint8Array(sealed);
+    const plaintextCopy = new Uint8Array(plaintext);
+    const chunkNonce = concatBytes(this.ctx.noncePrefix, u64be(index));
+    const aad = concatBytes(
+      utf8('despawn/v1'),
+      this.ctx.sessionId,
+      u32be(index),
+      new Uint8Array([isFinal ? 1 : 0]),
+    );
+
+    try {
+      const sealed = await globalThis.crypto.subtle.encrypt(
+        {
+          name: 'AES-GCM',
+          iv: new Uint8Array(chunkNonce),
+          additionalData: new Uint8Array(aad),
+          tagLength: 128,
+        },
+        this.key,
+        plaintextCopy,
+      );
+
+      return new Uint8Array(sealed);
+    } catch (err) {
+      this.failed = true;
+      if (err instanceof CryptoError) {
+        throw err;
+      }
+      throw new CryptoError('INVALID_INPUT');
+    }
   }
 }
 
@@ -115,6 +132,8 @@ class ChunkDecryptorImpl implements ChunkDecryptor {
   private readonly ctx: ChunkContext;
   private index = 0;
   private isDone = false;
+  private failed = false;
+  private tail: Promise<void> = Promise.resolve();
 
   constructor(key: CryptoKey, ctx: ChunkContext) {
     this.key = key;
@@ -124,22 +143,39 @@ class ChunkDecryptorImpl implements ChunkDecryptor {
     };
   }
 
-  async open(
+  open(sealed: Uint8Array): Promise<{ plaintext: Uint8Array; isFinal: boolean; index: number }> {
+    const copy = new Uint8Array(sealed);
+    const run = this.tail.then(() => this.openOne(copy));
+    this.tail = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  private async openOne(
     sealed: Uint8Array,
   ): Promise<{ plaintext: Uint8Array; isFinal: boolean; index: number }> {
+    if (this.failed) {
+      throw new CryptoError('AUTH_FAILED');
+    }
+
     if (this.isDone) {
       throw new CryptoError('AFTER_FINAL');
     }
 
     if (this.index > 0xffffffff) {
+      this.failed = true;
       throw new CryptoError('INVALID_INPUT');
     }
 
     if (sealed.length < GCM_TAG_BYTES) {
+      this.failed = true;
       throw new CryptoError('AUTH_FAILED');
     }
 
     if (sealed.length > CHUNK_SIZE + GCM_TAG_BYTES) {
+      this.failed = true;
       throw new CryptoError('INVALID_INPUT');
     }
 
@@ -202,11 +238,15 @@ class ChunkDecryptorImpl implements ChunkDecryptor {
         index: currentIndex,
       };
     } catch {
+      this.failed = true;
       throw new CryptoError('AUTH_FAILED');
     }
   }
 
   finish(): void {
+    if (this.failed) {
+      throw new CryptoError('AUTH_FAILED');
+    }
     if (!this.isDone) {
       throw new CryptoError('TRUNCATED');
     }
