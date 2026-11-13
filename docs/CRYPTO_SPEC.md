@@ -82,6 +82,10 @@ Plaintext length per chunk is at most `CHUNK_SIZE`. Sealed length is plaintext l
 - After a final chunk is accepted, any further chunk is rejected with `AFTER_FINAL`.
 - Calling `finish()` before a final chunk was accepted throws `TRUNCATED`.
 - A reordered, duplicated, spliced or cross-session chunk fails authentication.
+- The encryptor assigns each chunk its index synchronously at the moment seal() is called, before any asynchronous work, and copies all inputs at that moment. Concurrent or un-awaited calls therefore never share an index or nonce. Call order defines index order.
+- If sealing fails after an index was assigned, the encryptor is permanently failed and every later seal() throws INVALID_INPUT. Argument validation errors (plaintext too large) do not assign an index and do not fail the encryptor.
+- The decryptor processes open() calls strictly one at a time, in call order. Calls are queued, so concurrent calls can never accept a chunk twice or skip an index.
+- Fail closed: once open() has thrown AUTH_FAILED or INVALID_INPUT, the decryptor is permanently failed. Every later open() throws AUTH_FAILED and finish() throws AUTH_FAILED. AFTER_FINAL after a completed stream does not mark the decryptor failed.
 
 ## 4. Validation and errors
 
@@ -97,6 +101,8 @@ Validate every input length before use. Public keys must be exactly 65 bytes sta
 | `AFTER_FINAL` | Seal or open after the final chunk |
 
 Error messages are **fixed strings per code**. They never contain keys, secrets, plaintext, lengths of secret data, or any input value.
+
+Every public async function converts any unexpected platform exception into CryptoError with code INVALID_INPUT. Callers only ever see CryptoError.
 
 ## 5. Required exports of `@despawn/crypto`
 
@@ -185,6 +191,15 @@ Every item below must exist and pass. Load vectors from `docs/crypto-vectors.jso
 10. **Key objects:** the key returned by `unwrapFileKey` has `extractable === false` and usages exactly `['decrypt']`. `importFileKey` keys are non-extractable.
 11. **Errors:** error messages are constant per code and contain none of the input bytes (assert that no error message contains a hex or base64url rendering of the key or plaintext used in the test).
 12. **Full flow:** an end-to-end test that plays the owner and the shop: generate ids, derive the channel key, shop hello and MAC verify, SAS equal on both sides, owner wrap and release MAC, shop verify then unwrap, owner seals three chunks, shop opens them and the final flag matches.
+13. **Misuse and concurrency:**
+    - Firing 50 un-awaited `seal()` calls with `Promise.all` assigns distinct indices 0..49; a fresh decryptor opens all in order and finish() succeeds; nextIndex is 50 and finished is true.
+    - Two un-awaited `seal()` calls receive indices 0 and 1 in order.
+    - Concurrent duplicate `open()` calls on the same chunk reject one and fulfill one.
+    - Concurrent in-order `open()` calls (chunks 0, 1, 2) fulfill with indices 0, 1, 2 in order.
+    - Fail closed: after `open()` throws `AUTH_FAILED`, subsequent `open()` and `finish()` calls throw `AUTH_FAILED`.
+    - Failing `seal()` (e.g. key without encrypt usage) permanently poisons the encryptor; argument errors (oversized plaintext) do not poison a healthy encryptor.
+    - Raw platform errors never escape: passing wrong-type keys to all public async functions rejects with `CryptoError`.
+    - `AFTER_FINAL` on a completed stream throws `AFTER_FINAL`, not `AUTH_FAILED`.
 
 ## 7. Not in this package
 
