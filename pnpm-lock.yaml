@@ -71,7 +71,15 @@ importers:
 
   packages/crypto: {}
 
-  packages/protocol: {}
+  packages/protocol:
+    dependencies:
+      '@despawn/crypto':
+        specifier: workspace:*
+        version: link:../crypto
+    devDependencies:
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
 
   packages/render: {}
 
