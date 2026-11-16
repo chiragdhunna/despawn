@@ -1,0 +1,16 @@
+{
+  "name": "@despawn/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@despawn/adapter-node": "workspace:*",
+    "@types/node": "22",
+    "playwright-core": "^1.50.0"
+  }
+}
