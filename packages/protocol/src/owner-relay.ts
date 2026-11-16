@@ -281,6 +281,16 @@ export function validateRelayToOwner(x: unknown): RelayToOwner | null {
         shopReportedWipe,
       };
     }
+    case 'requestGone': {
+      if (!checkObjectKeys(x, ['v', 't', 'reqId'])) {
+        return null;
+      }
+      const reqId = x.reqId;
+      if (!isB16(reqId)) {
+        return null;
+      }
+      return { v: 1, t: 'requestGone', reqId };
+    }
     case 'error': {
       if (!checkObjectKeys(x, ['v', 't', 'code'])) {
         return null;

@@ -172,6 +172,12 @@ export interface RelayToOwnerDestroyed {
   readonly shopReportedWipe: boolean;
 }
 
+export interface RelayToOwnerRequestGone {
+  readonly v: 1;
+  readonly t: 'requestGone';
+  readonly reqId: string;
+}
+
 export interface RelayToOwnerError {
   readonly v: 1;
   readonly t: 'error';
@@ -179,7 +185,11 @@ export interface RelayToOwnerError {
 }
 
 export type RelayToOwner =
-  RelayToOwnerRequest | RelayToOwnerStatus | RelayToOwnerDestroyed | RelayToOwnerError;
+  | RelayToOwnerRequest
+  | RelayToOwnerRequestGone
+  | RelayToOwnerStatus
+  | RelayToOwnerDestroyed
+  | RelayToOwnerError;
 
 // 5. HTTP shapes
 export interface CreateSessionRequest {

@@ -70,6 +70,7 @@ export type {
   OwnerToRelayHb,
   OwnerToRelay,
   RelayToOwnerRequest,
+  RelayToOwnerRequestGone,
   RelayToOwnerStatus,
   RelayToOwnerDestroyed,
   RelayToOwnerError,
@@ -107,3 +108,14 @@ export {
   isToken32,
   isVerifyId,
 } from './http.js';
+
+export {
+  createSession,
+  reduce,
+  checkInvariants,
+  type TimerName,
+  type SessionModel,
+  type MachineEvent,
+  type Effect,
+  type Transition,
+} from './machine.js';

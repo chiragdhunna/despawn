@@ -74,11 +74,33 @@ export function checkObjectKeys(
   return true;
 }
 
+/**
+ * True if the string contains anything PROTOCOL_SPEC.md section 1 forbids in text fields:
+ * control characters, bidirectional controls, line/paragraph separators, the BOM, or unpaired surrogates.
+ * (Name kept for compatibility with existing call sites.)
+ */
 export function hasControlChars(s: string): boolean {
   for (let i = 0; i < s.length; i++) {
     const c = s.charCodeAt(i);
-    if ((c >= 0x00 && c <= 0x1f) || c === 0x7f) {
+    if (c <= 0x1f || c === 0x7f) {
       return true;
+    }
+    if (c === 0x200e || c === 0x200f || (c >= 0x202a && c <= 0x202e)) {
+      return true;
+    }
+    if ((c >= 0x2066 && c <= 0x2069) || c === 0x2028 || c === 0x2029 || c === 0xfeff) {
+      return true;
+    }
+    if (c >= 0xd800 && c <= 0xdbff) {
+      const next = i + 1 < s.length ? s.charCodeAt(i + 1) : 0;
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        i++; // valid pair
+        continue;
+      }
+      return true; // lone high surrogate
+    }
+    if (c >= 0xdc00 && c <= 0xdfff) {
+      return true; // lone low surrogate
     }
   }
   return false;
