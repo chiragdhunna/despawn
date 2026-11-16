@@ -1,0 +1,23 @@
+# Self-hosting: `docker compose up -d`, then put an HTTPS reverse proxy in front (see docs/SELF_HOSTING.md).
+# Browsers only allow the crypto Despawn needs on HTTPS pages (or on http://localhost).
+services:
+  despawn:
+    build: .
+    image: despawn:local
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:8080:8080'
+    environment:
+      PORT: '8080'
+      TRUST_PROXY: 'true' # only because a reverse proxy you control sits in front
+      MAX_BLOB_BYTES: '26214400'
+      MAX_SESSIONS_PER_DAY: '10000'
+      MAX_ACTIVE_SESSIONS: '1000'
+    # Ciphertext lives in RAM only: nothing is written to disk, and a restart erases it.
+    tmpfs:
+      - /data/blobs:size=128m,mode=1777
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
