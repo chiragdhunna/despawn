@@ -501,7 +501,7 @@ Multiple pages show a vertical scroll. A help link, "Print window didn't open?",
 
 ### V4. Printing
 
-"Sending to printer. Take the pages from the tray." The Print button is disabled. If `afterprint` does not fire, the timer fallback moves to V5.
+"Sending to printer. Take the pages from the tray." The Print button is disabled. If `afterprint` does not fire, a 30 second fallback applies. Either way the screen then asks "Did the pages print?" with **Yes, printed** and **Print again**, because browsers also fire `afterprint` for a cancelled dialog. Only the first button sends `printed`, and the wipe starts after it.
 
 ### V5. Destroyed
 

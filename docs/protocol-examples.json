@@ -1,5 +1,5 @@
 {
-  "_comment": "Valid example messages for docs/PROTOCOL_SPEC.md. Every binary field is real base64url of the right length. Do not edit by hand.",
+  "_comment": "Valid example messages for docs/PROTOCOL_SPEC.md (revision 2). Every binary field is real base64url of the right length. Do not edit by hand.",
   "ids": {
     "sessionId": "AAECAwQFBgcICQoLDA0ODw",
     "reqId": "8PHy8_T19vf4-fr7_P3-_w",
@@ -119,6 +119,11 @@
         "region": "Maharashtra"
       },
       "at": 1794000000000
+    },
+    "requestGone": {
+      "v": 1,
+      "t": "requestGone",
+      "reqId": "8PHy8_T19vf4-fr7_P3-_w"
     },
     "status": {
       "v": 1,

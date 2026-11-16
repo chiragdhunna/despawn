@@ -41,7 +41,7 @@ flowchart LR
 | ID | Adversary | Can do | Mitigation | Residual risk |
 |---|---|---|---|---|
 | A1 | Curious shopkeeper, no tools | Use the browser UI, the print dialog, the file system | No download button, nothing written to disk, memory-only blobs, `no-store`, auto-wipe, no service worker | None for casual use |
-| A2 | Determined shopkeeper | Screenshot, "Save as PDF" from the print dialog, phone photo, DevTools on the page | Baked watermark with session ID, purpose binding, revocable verification, short live window, owner present at the counter | **Accepted.** Pixels must exist to print. |
+| A2 | Determined shopkeeper | Screenshot, "Save as PDF" from the print dialog, phone photo, DevTools on the page | Baked watermark with a reference code, purpose binding, revocable verification, short live window, owner present at the counter | **Accepted.** Pixels must exist to print. |
 | A3 | Link forwarder or replayer | Send the link elsewhere, reopen it tomorrow | Link is inert without live approval. SAS code must match the screen in front of the owner. Single-use release. | Owner approves a wrong code (UX mitigations: hold-to-confirm, request details) |
 | A4 | Network attacker on the shop Wi-Fi | Observe or tamper with traffic | TLS, plus end-to-end encryption, plus MAC-authenticated shop key bound to the link secret from the URL fragment | A TLS-intercepting proxy with an installed root CA can alter the viewer code. That is equivalent to A2 because the same party already sees the pixels. |
 | A5 | Honest-but-curious relay operator | Read stored blobs and metadata | E2E encryption, no content in logs, file names never leave the phone | Metadata: IP, user agent, timing, approximate size |
@@ -70,22 +70,26 @@ No software can prevent capture of pixels that are printed or displayed. The sys
 
 ### 4.1 State machine
 
+The transition table, effects and invariants are specified in [STATE_MACHINE.md](STATE_MACHINE.md). The reducer lives in `packages/protocol/src/machine.ts`.
+
 ```mermaid
 stateDiagram-v2
-  [*] --> DRAFT: owner prepares on phone
-  DRAFT --> ARMED: ciphertext uploaded, link created
-  ARMED --> OPENED: shop opens link (hello)
-  OPENED --> AWAITING: owner sees request
-  AWAITING --> RELEASED: owner approves, key wrapped
-  AWAITING --> ARMED: owner denies one request
-  RELEASED --> LIVE: shop decrypts and renders
-  LIVE --> LIVE: print while under the limit
-  LIVE --> DESTROYED: print done + grace, owner kill, or live TTL
+  [*] --> CREATED: owner creates session
+  CREATED --> ARMED: ciphertext uploaded
+  CREATED --> EXPIRED: upload timeout
+  CREATED --> CANCELLED: owner kill
+  ARMED --> AWAITING: shop hello
   ARMED --> EXPIRED: link validity ends
-  ARMED --> CANCELLED: owner cancels
-  OPENED --> CANCELLED: owner cancels
-  AWAITING --> CANCELLED: owner cancels
-  RELEASED --> ABORTED: heartbeat lost
+  ARMED --> CANCELLED: owner kill
+  AWAITING --> AWAITING: more requests, one denied, or one gone
+  AWAITING --> ARMED: last pending request denied or gone
+  AWAITING --> RELEASED: owner approves one request
+  AWAITING --> EXPIRED: link validity ends
+  AWAITING --> CANCELLED: owner kill
+  RELEASED --> LIVE: shop reports rendered
+  RELEASED --> ABORTED: heartbeat lost or release timeout
+  RELEASED --> DESTROYED: owner kill or shop wiped
+  LIVE --> DESTROYED: last print and grace done, live timeout, owner kill, or shop wiped
   LIVE --> ABORTED: heartbeat lost
   DESTROYED --> [*]
   EXPIRED --> [*]
@@ -99,7 +103,9 @@ Every terminal state triggers the same cleanup: delete the blob, notify both soc
 
 | Timer | Default | Range | Starts | On expiry |
 |---|---|---|---|---|
+| Upload timeout | 10 min | fixed | Session created | EXPIRED, session removed |
 | Link validity | 30 min | 5 min to 24 h | Session armed | EXPIRED, blob deleted |
+| Release timeout | 60 s | fixed | Key released to the shop | ABORTED (the shop never reported rendered) |
 | Live time | 2 min | 30 s to 10 min | First page rendered | DESTROYED |
 | Post-print grace | 10 s | 0 to 60 s | `afterprint` | DESTROYED (or immediately if "destroy after print" is on, the default) |
 | Heartbeat timeout | 10 s | fixed | Last tick or heartbeat | ABORTED, viewer wipes |
@@ -265,17 +271,27 @@ JSON, versioned (`v: 1`), validated with shared dependency-free validators. docs
 | Shop to relay | `hb`, `rendered`, `printStarted`, `printed`, `wiped` | `seq`, `state`, `reason` |
 | Relay to shop | `tick` | `ownerAlive`, `remainingMs` |
 | Relay to shop | `kill` | `reason` |
+| Relay to owner | `requestGone` | `reqId` |
 | Relay to owner | `status` | `state`, `shopSeen`, `lastHbMs` |
 | Relay to owner | `destroyed` | `receipt` |
 
 Rules: only one pending request is approvable at a time; approving one denies the rest; `approve` is accepted once per session; messages in the wrong state are dropped and logged without content.
+
+### 8.4 Connections and limits
+
+- **WebSocket authentication.** The owner connects with the subprotocols `despawn.v1` and `token.<ownerToken>`, so the token travels in a header and never appears in a URL or access log. The shop connects with `despawn.v1` only. The relay always selects `despawn.v1`.
+- **Frames.** Text only, at most `MAX_FRAME_BYTES` (4096). A larger frame closes the socket (1009), a binary frame closes it (1003), and three invalid frames in a row close it.
+- **Per session.** At most 12 shop connections, and a connection that does not send `hello` within 10 s is closed. At most 4 requests can be pending at once.
+- **Per client (adapter).** 20 session creations per minute and 40 open sockets per hashed client address, both configurable.
+- **Global.** `maxSessionsPerDay` and `maxActiveSessions`, plus `maxBlobBytes` for uploads.
+- **Heartbeats.** The shop sends `hb` every 2 s and the relay answers with `tick`. The owner sends `hb` every 2 s. The relay reports `ownerAlive: false` after 5 s of owner silence and aborts the session after 10 s of silence from either side.
 
 ## 9. Print path
 
 1. After `released`, the viewer fetches ciphertext, decrypts chunk by chunk, and builds `<img>` elements from the manifest's page sizes.
 2. The viewer shows the pages at screen size with the live countdown and the Print button.
 3. On Print, the viewer builds the print container, applies `@page` size, sends `printStarted`, and calls `window.print()`.
-4. `afterprint` triggers `printed`. A timer fallback (30 s after `printStarted`) covers browsers that do not fire it.
+4. `afterprint` (or the 30 s timer fallback) moves the viewer to a question for the shop operator: "Did the pages print?" Browsers also fire `afterprint` when the dialog was cancelled, so only **Yes, printed** sends `printed`. **Print again** reprints without a new `printStarted`.
 5. With "destroy after print" on (default), the grace timer runs and then the wipe procedure.
 
 Print quality: pages are rasterized at 200 DPI (300 for ID cards) and scaled by CSS to the exact paper size. ID-card layouts place the card at 85.6 × 54 mm so the copy is physically accurate.
@@ -285,6 +301,8 @@ Print quality: pages are rasterized at 200 DPI (300 for ID cards) and scaled by 
 For printers reachable from the phone (Wi-Fi Direct, AirPrint, Mopria), the owner app runs the same prepare pipeline and calls the system print dialog on the phone. No relay session is needed, and the shop PC is never involved. It is the strongest mode when available, and the UI recommends it when the owner says the shop's printer has Wi-Fi.
 
 ## 11. Deployment targets
+
+Status: `adapters/node` is implemented and tested (Docker files included, see SELF_HOSTING.md). `adapters/cloudflare` and `adapters/aws` are skeletons.
 
 Core logic lives in `packages/server-core` behind ports (`SessionStore`, `BlobStore`, `Clock`, `Challenge`), with three adapters:
 

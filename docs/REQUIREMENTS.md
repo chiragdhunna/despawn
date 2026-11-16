@@ -92,7 +92,7 @@ Priority: **M** must, **S** should, **C** could. Phase: P1 = v0.1 MVP, P2 = v0.2
 |---|---|---|---|
 | PRP-01 | Flatten every document to raster pages. Strip metadata, EXIF, text layer, annotations, scripts. | M | P1 |
 | PRP-02 | Layout presets: full page, fit to page, ID card at actual size (85.6 × 54 mm) with front and back on one sheet, two per page. Paper sizes A4, A5, Letter. | M | P1 |
-| PRP-03 | Purpose-bound watermark: preset purposes (KYC, SIM, bank, job application) plus custom text, auto date, session short ID, tiled diagonal plus corner stamp, density and opacity control. | M | P1 |
+| PRP-03 | Purpose-bound watermark: preset purposes (KYC, SIM, bank, job application) plus custom text, auto date, a short reference code (also kept on the receipt), tiled diagonal plus corner stamp, density and opacity control. | M | P1 |
 | PRP-04 | "Self-attested for [purpose] only" stamp variant, following the common Indian photocopy convention. | S | P1 |
 | PRP-05 | Live preview that matches the printed output (same renderer as the shop viewer). | M | P1 |
 | PRP-06 | Mask regions (black box or blur) before encryption. | S | P2 |

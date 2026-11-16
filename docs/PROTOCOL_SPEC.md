@@ -1,5 +1,7 @@
 # Despawn: Protocol specification (v1), wire formats
 
+Revision 2. Changes from revision 1: stricter text-field rules (section 1) and a new relay-to-owner message `requestGone` (section 4.4).
+
 Status: **normative**. This makes `docs/ARCHITECTURE.md` sections 4.2, 8.2 and 8.3 byte-exact. Where they differ, this document wins. The session **state machine** (transitions and effects) is specified separately in Task 3. This document only defines the state **names**, the messages, the limits and the validators.
 
 Examples: [`protocol-examples.json`](protocol-examples.json). Every example must parse successfully with the matching parser.
@@ -13,7 +15,12 @@ Examples: [`protocol-examples.json`](protocol-examples.json). Every example must
 - **Integers** must be JSON numbers that satisfy `Number.isSafeInteger` and lie in the stated range. Floats, `NaN`, strings and booleans are invalid.
 - **Frame limit:** a text frame longer than `MAX_FRAME_BYTES` (UTF-8 bytes, measured before parsing) is rejected with `TOO_LARGE` without parsing.
 - **Nesting:** at most 3 levels of objects. Arrays are not used anywhere in v1 and are invalid.
-- **Text fields** (`ShortText`, `Region`, `purposeLabel`, `challengeToken`) must not contain control characters (U+0000 to U+001F, U+007F) and must have a length within the stated limits (counted in UTF-16 code units).
+- **Text fields** (`ShortText`, `Region`, `purposeLabel`, `challengeToken`) must have a length within the stated limits (counted in UTF-16 code units) and must not contain any of the following:
+  - control characters U+0000 to U+001F and U+007F;
+  - bidirectional control characters U+200E, U+200F, U+202A to U+202E, and U+2066 to U+2069;
+  - the line and paragraph separators U+2028 and U+2029, and the byte-order mark U+FEFF;
+  - unpaired UTF-16 surrogates (a high surrogate U+D800 to U+DBFF not immediately followed by a low surrogate U+DC00 to U+DFFF, or a low surrogate not immediately preceded by a high one).
+  These strings come from the shop's browser and are shown to the owner on the approval screen. The rules prevent visual spoofing through text direction overrides and prevent crashes in URL and encoding functions. Receivers must still display them as plain text (never as HTML).
 - **Parsers never throw.** For any input string they return a result object. Serializers validate and throw `ProtocolError` on invalid input.
 
 ## 2. Primitive types
@@ -91,7 +98,10 @@ Every message also carries `v: 1` and `t`. Fields listed are in addition to thos
 | `request` | `reqId: ReqId`, `shopPub: B65`, `mac: B32`, `ua: Ua`, `approxLocation: null or { country?: CountryCode, region?: Region }`, `at: EpochMs` |
 | `status` | `state: SessionState`, `shopSeen: boolean`, `lastHbMs: Millis or null`, `printsDone: Count`, `remainingMs: Millis or null`, `pending: Count` |
 | `destroyed` | `reason: TerminalReason`, `at: EpochMs`, `printsDone: Count`, `shopReportedWipe: boolean` |
+| `requestGone` | `reqId: ReqId` |
 | `error` | `code: ErrorCode` |
+
+`requestGone` tells the owner that a pending request no longer exists because the shop that made it went away. The owner app removes it from its list. It is not sent for requests the owner denied or approved itself.
 
 `approxLocation` fields are optional individually. An empty object `{}` is valid. A field may not be present with the value `null`.
 
@@ -192,7 +202,7 @@ Load examples from `docs/protocol-examples.json`.
 4. **Binary fields:** non-canonical base64url, padding, wrong decoded length, and for `B65` a first byte other than `0x04` are all rejected.
 5. **Strictness:** an extra field, a `__proto__` key, a `constructor` key, an array at the top level, `null`, a number, a string, and an empty string are all rejected. `v` of `2`, `"1"` or missing is rejected.
 6. **Size:** a frame of `MAX_FRAME_BYTES + 1` UTF-8 bytes (including a frame whose character count is below the limit but whose byte count is above it, using multi-byte characters) returns `TOO_LARGE`. A frame of exactly `MAX_FRAME_BYTES` bytes is accepted only if it is otherwise valid.
-7. **Text:** control characters (U+0000, U+001F, U+007F) in `ShortText`, `Region`, `purposeLabel` and `challengeToken` are rejected. Length 0 and length max+1 are rejected for the types that have a minimum of 1.
+7. **Text:** every character class listed in section 1 is rejected in `ShortText`, `Region`, `purposeLabel` and `challengeToken`: U+0000, U+001F, U+007F, U+200E, U+200F, U+202A, U+202E, U+2066, U+2069, U+2028, U+2029, U+FEFF, a lone high surrogate, a lone low surrogate, a low surrogate before a high one. A valid surrogate pair (for example an emoji) and ordinary non-ASCII letters (for example Devanagari) are **accepted**. Length 0 and length max+1 are rejected for the types that have a minimum of 1. Test the lone-surrogate cases by building the frame from a JSON string with `\ud800` escapes, since JSON allows them.
 8. **Integers:** `NaN`, `Infinity`, `-1`, `1.5`, `"5"`, `2 ** 53` and out-of-range values are rejected for every integer field. Boundary values (min and max) are accepted.
 9. **Enumerations:** every valid value is accepted. A lowercase or unknown value is rejected, for every enumerated field.
 10. **Rules:** `DEFAULT_RULES` is valid. Each rule's min and max are accepted and min-1 and max+1 are rejected. `min <= default <= max` for every rule. `printLimit` 0 and 11 are rejected.
@@ -204,3 +214,5 @@ Load examples from `docs/protocol-examples.json`.
 ## 9. Not in this package
 
 The session state machine reducer, timers, server, storage, networking, UI and the print bundle format belong to other tasks.
+
+15. **`requestGone`:** valid with a `ReqId`, invalid when `reqId` is missing, has the wrong length, or an extra field is present. It is accepted only by `parseRelayToOwner`.
