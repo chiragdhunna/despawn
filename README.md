@@ -8,7 +8,7 @@
 <p align="center"><b>Your document gets one life.</b><br>Print at any shop, keep nothing behind.</p>
 
 <p align="center">
-  <i>Status: pre-alpha, planning. No installable release yet.</i>
+  <i>Status: v0.1 candidate. The whole flow works end to end in a real browser. See <a href="docs/STATUS.md">docs/STATUS.md</a> for exactly what is done and what is not.</i>
 </p>
 
 ---
@@ -38,12 +38,27 @@ You need to print your PAN card, Aadhaar, passport or a bank statement at a phot
 
 No software can stop a camera pointed at a screen or a page, because printing needs the pixels. Despawn removes every digital trace a shop would normally keep, shrinks the exposure window to about a minute, and makes whatever escapes low-value. It does not claim more than that. See the threat model in [ARCHITECTURE.md](docs/ARCHITECTURE.md#2-threat-model).
 
+## Try it
+
+```bash
+pnpm install
+pnpm build
+OWNER_DIST=$PWD/apps/owner/dist VIEWER_DIST=$PWD/apps/viewer/dist PORT=8080 node adapters/node/dist/main.mjs
+# open http://localhost:8080/ in one browser tab (the owner app),
+# then open the link it shows in another browser window (the shop).
+```
+
+Use `http://localhost` for local trials. Anywhere else the pages must be served over HTTPS because browsers only expose WebCrypto on secure pages. See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md).
+
 ## Documentation
 
 | Document | What it covers |
 |---|---|
 | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Vision, constraints, personas, functional and non-functional requirements, acceptance criteria, release phases |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Threat model, components, crypto protocol, session state machine, API, repo layout, deployment, decisions |
+| [docs/STATUS.md](docs/STATUS.md) | What is implemented, what is tested, what is not, and known limits |
+| [docs/STATE_MACHINE.md](docs/STATE_MACHINE.md) | Session transitions, effects and invariants |
+| [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) | Run your own instance with Docker or Node, HTTPS, configuration |
 | [docs/FILE_SUPPORT.md](docs/FILE_SUPPORT.md) | How any file format becomes printable pages, support matrix, fidelity levels, limits |
 | [docs/UI_DESIGN.md](docs/UI_DESIGN.md) | Brand, logo, design tokens, components, every screen with wireframes, copy, accessibility |
 | [docs/COSTING.md](docs/COSTING.md) | Running costs for a free, open-source deployment at different scales |
@@ -86,11 +101,13 @@ pnpm install
 - `pnpm format:check`: Check formatting with Prettier
 - `pnpm typecheck`: Run TypeScript type-checking across workspace
 - `pnpm test`: Run test suites with Vitest
+- `pnpm check:viewer`: Verify the built shop viewer is ES2018, small, self-contained and storage-free (run after `pnpm build`)
+- `pnpm e2e`: Build, then run the real-browser end-to-end tests (needs Chromium: `npx playwright-core install chromium`, or set `CHROMIUM_PATH`)
 - `pnpm clean`: Clean build artifacts and caches
 
 ### Folders
 - `apps/` contains web applications (`owner` PWA and `viewer` shop interface); `packages/` contains shared protocol, crypto, bundle, render, compose, ui, and server core logic.
-- `adapters/` hosts platform adapters (Node, Cloudflare, AWS); `docs/` and `design/` hold system specifications and visual design tokens.
+- `adapters/` hosts platform adapters (Node is implemented; Cloudflare and AWS are skeletons); `e2e/` holds the real-browser tests; `docs/` and `design/` hold system specifications and visual design tokens.
 
 ## Contributing, security, license
 

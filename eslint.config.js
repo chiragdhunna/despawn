@@ -22,6 +22,7 @@ export default tseslint.config(
       '**/playwright-report/**',
       '**/test-results/**',
       '**/_review/**',
+      'apps/owner/public/**',
     ],
   },
 );
