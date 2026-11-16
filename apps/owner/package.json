@@ -11,11 +11,19 @@
     "clean": "node -e \"const fs = require('fs'); ['dist', 'build', 'coverage'].forEach(d => fs.rmSync(d, { recursive: true, force: true }));\""
   },
   "dependencies": {
+    "@despawn/bundle": "workspace:*",
+    "@despawn/compose": "workspace:*",
+    "@despawn/crypto": "workspace:*",
     "@despawn/protocol": "workspace:*",
+    "@despawn/render": "workspace:*",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "qrcode-generator": "^2.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@despawn/adapter-node": "workspace:*",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.0",
