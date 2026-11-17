@@ -10,7 +10,7 @@ import {
   verifyReleaseMac,
 } from '@despawn/crypto';
 import { startServer, type RunningServer } from '@despawn/adapter-node';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { OwnerSession, type LiveState } from './session.js';
 
 const MARKER = 'OWNER-TEST-MARKER-ABCDEFGHIJKLMNOP';
@@ -233,5 +233,28 @@ describe('OwnerSession against the real relay', () => {
     const page = pageBytes();
     await s.start({ pages: [page], manifest, rules: RULES });
     expect(page.every((b) => b === 0)).toBe(true);
+  });
+
+  it('says so when the browser blocks encryption (plain http), without touching the server', async () => {
+    srv = await startServer();
+    const { s } = make();
+    vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) });
+    try {
+      await s.start({ pages: [pageBytes()], manifest, rules: RULES });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(s.current).toMatchObject({ phase: 'error', error: 'INSECURE' });
+    expect(srv.relay.stats().sessions).toBe(0);
+  });
+
+  it('removes the server session when locking fails after it was created', async () => {
+    srv = await startServer();
+    const { s } = make();
+    const bad = { ...manifest, pages: [{ ...manifest.pages[0]!, byteLength: 4999 }] };
+    await s.start({ pages: [pageBytes()], manifest: bad, rules: RULES });
+    expect(s.current).toMatchObject({ phase: 'error', error: 'INTERNAL' });
+    await until(() => srv.relay.stats().sessions === 0, 8000);
+    expect((await srv.inspect()).blobs).toBe(0);
   });
 });
