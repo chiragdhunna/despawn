@@ -6,7 +6,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from 'playwrig
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-export async function launch(): Promise<Browser> {
+export async function launch(more: string[] = []): Promise<Browser> {
   const executablePath = process.env.CHROMIUM_PATH;
   const extra: string[] = process.env.CHROMIUM_ARGS
     ? (JSON.parse(process.env.CHROMIUM_ARGS) as string[])
@@ -14,7 +14,7 @@ export async function launch(): Promise<Browser> {
   return chromium.launch({
     headless: true,
     ...(executablePath ? { executablePath } : {}),
-    args: ['--no-sandbox', ...extra],
+    args: ['--no-sandbox', ...extra, ...more],
   });
 }
 
