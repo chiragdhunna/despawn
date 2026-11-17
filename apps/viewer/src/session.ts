@@ -69,6 +69,11 @@ export class ViewerSession {
 
   async start(): Promise<void> {
     const nav = window;
+    if (nav.isSecureContext === false) {
+      this.phase = 'dead';
+      this.ui.message('insecure');
+      return;
+    }
     if (
       nav.crypto === undefined ||
       nav.crypto.subtle === undefined ||
