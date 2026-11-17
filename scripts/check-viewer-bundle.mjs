@@ -19,8 +19,6 @@ const FORBIDDEN = [
   'new Function',
   'innerHTML',
   'BigInt',
-  'http://',
-  'https://',
 ];
 const problems = [];
 let gz = 0;
@@ -34,6 +32,10 @@ for (const f of readdirSync(assets).filter((n) => n.endsWith('.js'))) {
     problems.push(`${f}: not valid ES2018 (${e.message})`);
   }
   for (const w of FORBIDDEN) if (src.includes(w)) problems.push(`${f}: contains forbidden "${w}"`);
+  // Explanatory text may mention "http://"; a real absolute URL with a host would be a remote request.
+  const remote = src.match(/https?:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)+/gi);
+  if (remote)
+    problems.push(`${f}: contains absolute URL(s): ${[...new Set(remote)].slice(0, 3).join(', ')}`);
 }
 const html = readFileSync(path.join(dist, 'index.html'), 'utf8');
 if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(html)) problems.push('index.html has an inline script');
