@@ -46,6 +46,9 @@ const en = {
   'unsupported.title': 'This browser is too old.',
   'unsupported.body':
     'It cannot open the document securely. Open this link in Chrome, Edge or Firefox.',
+  'insecure.title': "This page isn't secure.",
+  'insecure.body':
+    'The browser blocks encryption on plain http:// addresses. Ask the owner to send an https:// link.',
   'lost.title': 'Connection lost.',
   'lost.body': 'Reload this page to try again, or ask the owner for a new link.',
 } as const;
@@ -97,6 +100,9 @@ const hi: Record<StringKey, string> = {
   'unsupported.title': 'यह ब्राउज़र बहुत पुराना है।',
   'unsupported.body':
     'यह दस्तावेज़ सुरक्षित तरीके से नहीं खोल सकता। इस लिंक को Chrome, Edge या Firefox में खोलें।',
+  'insecure.title': 'यह पेज सुरक्षित नहीं है।',
+  'insecure.body':
+    'ब्राउज़र सादे http:// पते पर एन्क्रिप्शन रोक देता है। मालिक से https:// वाला लिंक भेजने को कहें।',
   'lost.title': 'कनेक्शन टूट गया।',
   'lost.body': 'दोबारा कोशिश के लिए पेज रीलोड करें, या मालिक से नया लिंक माँगें।',
 };
