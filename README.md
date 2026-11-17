@@ -43,12 +43,12 @@ No software can stop a camera pointed at a screen or a page, because printing ne
 ```bash
 pnpm install
 pnpm build
-OWNER_DIST=$PWD/apps/owner/dist VIEWER_DIST=$PWD/apps/viewer/dist PORT=8080 node adapters/node/dist/main.mjs
-# open http://localhost:8080/ in one browser tab (the owner app),
+pnpm start
+# open http://localhost:8080/app/ in one browser tab (the owner app),
 # then open the link it shows in another browser window (the shop).
 ```
 
-Use `http://localhost` for local trials. Anywhere else the pages must be served over HTTPS because browsers only expose WebCrypto on secure pages. See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md).
+Use `http://localhost` for local trials on one computer. For a phone, or any other address, the pages must be served over HTTPS because browsers only expose WebCrypto on secure pages. The apps say so when it is missing. See ["Trying it on your phone"](docs/SELF_HOSTING.md#trying-it-on-your-phone-at-home).
 
 ## Documentation
 
@@ -101,6 +101,7 @@ pnpm install
 - `pnpm format:check`: Check formatting with Prettier
 - `pnpm typecheck`: Run TypeScript type-checking across workspace
 - `pnpm test`: Run test suites with Vitest
+- `pnpm start`: Run the built relay, owner app and shop viewer on port 8080 (run `pnpm build` first)
 - `pnpm check:viewer`: Verify the built shop viewer is ES2018, small, self-contained and storage-free (run after `pnpm build`)
 - `pnpm e2e`: Build, then run the real-browser end-to-end tests (needs Chromium: `npx playwright-core install chromium`, or set `CHROMIUM_PATH`)
 - `pnpm clean`: Clean build artifacts and caches
