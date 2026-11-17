@@ -83,7 +83,16 @@ const en = {
   'session.errorUPLOAD_FAILED': "Couldn't upload. Your document is still only on this phone.",
   'session.errorNETWORK': "Can't reach the server. Your document is still only on this phone.",
   'session.errorCREATE_FAILED': "The server didn't accept the request.",
+  'session.errorINSECURE':
+    "This page isn't secure, so the browser blocks encryption. Open Despawn over HTTPS.",
+  'session.errorINTERNAL':
+    'Something went wrong while locking your document. Your document is still only on this phone.',
   'session.retry': 'Try again',
+  'insecure.title': "This page isn't secure.",
+  'insecure.body':
+    'Despawn encrypts your document in the browser, and browsers only allow that on https:// pages or on localhost. Open this app over HTTPS.',
+  'insecure.help':
+    'Testing at home? Use an HTTPS tunnel such as cloudflared, or follow docs/SELF_HOSTING.md.',
   'approve.title': 'Someone opened your link',
   'approve.question': 'Does the shop screen show this code?',
   'approve.hold': 'Hold to approve',
@@ -220,7 +229,15 @@ const hi: Record<Key, string> = {
   'session.errorUPLOAD_FAILED': 'अपलोड नहीं हो सका। आपका दस्तावेज़ अब भी सिर्फ़ इसी फ़ोन में है।',
   'session.errorNETWORK': 'सर्वर तक नहीं पहुँच सके। आपका दस्तावेज़ अब भी सिर्फ़ इसी फ़ोन में है।',
   'session.errorCREATE_FAILED': 'सर्वर ने अनुरोध स्वीकार नहीं किया।',
+  'session.errorINSECURE':
+    'यह पेज सुरक्षित (HTTPS) नहीं है, इसलिए ब्राउज़र एन्क्रिप्शन रोक देता है। Despawn को HTTPS पर खोलें।',
+  'session.errorINTERNAL': 'दस्तावेज़ लॉक करते समय कुछ गड़बड़ हो गई। आपका दस्तावेज़ अब भी सिर्फ़ इसी फ़ोन में है।',
   'session.retry': 'फिर कोशिश करें',
+  'insecure.title': 'यह पेज सुरक्षित नहीं है।',
+  'insecure.body':
+    'Despawn दस्तावेज़ को ब्राउज़र में एन्क्रिप्ट करता है, और ब्राउज़र इसकी अनुमति सिर्फ़ https:// पेज या localhost पर देते हैं। इस ऐप को HTTPS पर खोलें।',
+  'insecure.help':
+    'घर पर टेस्ट कर रहे हैं? cloudflared जैसी HTTPS टनल इस्तेमाल करें, या docs/SELF_HOSTING.md देखें।',
   'approve.title': 'किसी ने आपका लिंक खोला है',
   'approve.question': 'क्या दुकान की स्क्रीन पर यही कोड दिख रहा है?',
   'approve.hold': 'मंज़ूरी के लिए दबाए रखें',
