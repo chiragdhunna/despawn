@@ -25,6 +25,11 @@ import {
   type TerminalReason,
 } from '@despawn/protocol';
 
+/** True when the browser allows the encryption this app depends on (HTTPS pages and localhost). */
+export function cryptoAvailable(): boolean {
+  return typeof crypto !== 'undefined' && typeof crypto.subtle !== 'undefined';
+}
+
 export interface RequestView {
   readonly reqId: string;
   readonly browser: string;
@@ -115,6 +120,18 @@ export class OwnerSession {
     this.zeroKey();
     this.set({ phase: 'error', error: code });
     this.stopTimers();
+    this.cleanupRemote();
+  }
+
+  /** Best effort: a session that never became usable should not linger on the server. */
+  private cleanupRemote(): void {
+    if (this.id === '' || this.ownerToken === '') {
+      return;
+    }
+    void fetch(`${this.baseUrl}/v1/sessions/${this.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${this.ownerToken}` },
+    }).catch(() => undefined);
   }
 
   private zeroKey(): void {
@@ -135,6 +152,11 @@ export class OwnerSession {
 
   async start(p: StartParams): Promise<void> {
     this.set({ ...INITIAL, phase: 'creating' });
+    if (!cryptoAvailable()) {
+      // Browsers only expose WebCrypto on https:// pages and on localhost.
+      this.fail('INSECURE');
+      return;
+    }
     try {
       const payload = p.pages.reduce((a, b) => a + b.length, 0);
       const bound = bundleSizeUpperBound(payload);
@@ -202,8 +224,12 @@ export class OwnerSession {
         link: `${this.baseUrl}/s/${this.id}#${base64urlEncode(this.linkSecret)}`,
       });
       this.connect();
-    } catch {
-      this.fail('NETWORK');
+    } catch (e) {
+      this.fail(
+        e instanceof TypeError && /fetch|network|load failed/i.test(e.message)
+          ? 'NETWORK'
+          : 'INTERNAL',
+      );
     }
   }
 
