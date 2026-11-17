@@ -15,7 +15,8 @@
     "test": "vitest run",
     "clean": "node -e \"const fs = require('fs'); ['dist', 'coverage', '.turbo'].forEach(d => fs.rmSync(d, { recursive: true, force: true }));\" && pnpm -r --if-present run clean",
     "check:viewer": "node scripts/check-viewer-bundle.mjs",
-    "e2e": "pnpm build && pnpm --filter @despawn/e2e test"
+    "e2e": "pnpm build && pnpm --filter @despawn/e2e test",
+    "start": "node scripts/start.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
