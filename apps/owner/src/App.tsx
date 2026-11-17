@@ -28,7 +28,7 @@ import {
   type PrepareOptions,
 } from './pipeline.js';
 import { Qr } from './qr.js';
-import { OwnerSession, type LiveState } from './session.js';
+import { OwnerSession, cryptoAvailable, type LiveState } from './session.js';
 import {
   addReceipt,
   clearReceipts,
@@ -116,8 +116,16 @@ function Shell(props: {
 function Home(props: { receipts: Receipt[]; onFile: (f: File) => void; go: (v: View) => void }) {
   const { tr } = useApp();
   const input = useRef<HTMLInputElement>(null);
+  const secure = cryptoAvailable();
   return (
     <Shell onSettings={() => props.go({ v: 'settings' })}>
+      {secure ? null : (
+        <section className="card notch" role="alert" data-testid="insecure-notice">
+          <strong className="warn">{tr('insecure.title')}</strong>
+          <p>{tr('insecure.body')}</p>
+          <p className="muted small">{tr('insecure.help')}</p>
+        </section>
+      )}
       <input
         ref={input}
         type="file"
@@ -132,6 +140,7 @@ function Home(props: { receipts: Receipt[]; onFile: (f: File) => void; go: (v: V
       <button
         type="button"
         className="dropzone notch"
+        disabled={!secure}
         onClick={() => input.current?.click()}
         data-testid="new-job"
       >
