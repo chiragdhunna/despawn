@@ -273,7 +273,7 @@ export class Ui {
     });
   }
 
-  message(kind: 'invalid' | 'unsupported' | 'busy' | 'lost'): void {
+  message(kind: 'invalid' | 'unsupported' | 'busy' | 'lost' | 'insecure'): void {
     this.mount(kind, () => this.block(`${kind}.title` as StringKey, `${kind}.body` as StringKey));
   }
 
