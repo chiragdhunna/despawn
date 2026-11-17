@@ -28,6 +28,14 @@ despawn.example.com {
 
 Caddy gets and renews the certificate on its own and forwards WebSockets without extra settings. Any proxy works if it forwards `Upgrade` headers and sets `X-Forwarded-For`.
 
+## Trying it on your phone at home
+
+A phone opening `http://192.168.x.x:8080` is **not** a secure page, so the browser hides the encryption APIs and Despawn tells you so instead of failing. Pick one:
+
+1. **HTTPS tunnel (easiest).** With the server running on port 8080, run `cloudflared tunnel --url http://localhost:8080` (or any similar tunnel). It prints an `https://` address. Open `https://<that address>/app/` on the phone, and open the share link on the "shop" computer. Both ends now work.
+2. **Chrome flag for development only.** On Android Chrome open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`, add `http://192.168.x.x:8080` (your computer's address), enable it and relaunch. On the shop laptop you can open the same link but replace the address with `http://localhost:8080`, which browsers always treat as secure.
+3. **Your own domain with HTTPS** (see the Caddy example above).
+
 ## Configuration
 
 | Variable | Default | Meaning |
@@ -47,7 +55,7 @@ Per-client limits (20 session creations a minute, 40 sockets) are options of `st
 ```bash
 pnpm install --frozen-lockfile
 pnpm build
-OWNER_DIST=$PWD/apps/owner/dist VIEWER_DIST=$PWD/apps/viewer/dist PORT=8080 node adapters/node/dist/main.mjs
+pnpm start   # or: PORT=8080 pnpm start
 ```
 
 ## What the server keeps
