@@ -54,7 +54,7 @@ export class ViewerSession {
   private hbSeq = 0;
   private timers: number[] = [];
   private printTimer: number | null = null;
-  private onAfterPrint: (() => void) | null = null;
+  private printEvents = 0;
 
   constructor(
     private readonly ui: Ui,
@@ -361,11 +361,24 @@ export class ViewerSession {
       this.remainingMs = m.limits.liveTtlMs;
       this.phase = 'ready';
       this.showReady(pages);
+      this.ui.buildPrint(pages, bundle.manifest.paper, bundle.manifest.orientation === 'landscape');
+      window.addEventListener('beforeprint', this.onBeforePrint);
+      window.addEventListener('afterprint', this.onAfterPrint);
+      // The browser prints the address of this page in its header, so do not leave the session in it.
+      this.hideSessionFromUrl();
       this.send({ v: 1, t: 'rendered', pageCount: pages.length });
     } catch {
       this.wipe('ERROR', 'reason.ERROR');
     } finally {
       window.clearTimeout(slow);
+    }
+  }
+
+  private hideSessionFromUrl(): void {
+    try {
+      window.history.replaceState(null, '', '/');
+    } catch {
+      // not fatal
     }
   }
 
@@ -388,29 +401,45 @@ export class ViewerSession {
     this.ui.updateLive(this.remainingMs, this.ownerAlive, this.limits.liveTtlMs);
   }
 
-  private print(): void {
-    const man = this.manifest;
-    if (man === null || (this.phase !== 'ready' && this.phase !== 'confirm')) {
+  /**
+   * The printable pages are built as soon as the document is ready, so printing works however it
+   * is started: the Print button, Ctrl+P or the browser menu. State changes ride on the browser's
+   * beforeprint and afterprint events for the same reason.
+   */
+  private readonly onBeforePrint = (): void => {
+    if (this.phase !== 'ready' && this.phase !== 'confirm') {
       return;
     }
+    this.printEvents++;
     this.phase = 'printing';
-    this.ui.buildPrint(this.pageViews(), man.paper, man.orientation === 'landscape');
     if (!this.printStartedSent) {
       this.printStartedSent = true;
       this.send({ v: 1, t: 'printStarted' });
     }
-    this.ui.printing();
-    const done = (): void => this.toConfirm();
-    if (this.onAfterPrint !== null) {
-      window.removeEventListener('afterprint', this.onAfterPrint);
+    if (this.printTimer !== null) {
+      window.clearTimeout(this.printTimer);
     }
-    this.onAfterPrint = done;
-    window.addEventListener('afterprint', done, { once: true });
-    this.printTimer = window.setTimeout(done, PRINT_FALLBACK_MS);
+    this.printTimer = window.setTimeout(() => this.toConfirm(), PRINT_FALLBACK_MS);
+  };
+
+  private readonly onAfterPrint = (): void => {
+    this.toConfirm();
+  };
+
+  private print(): void {
+    if (this.manifest === null || (this.phase !== 'ready' && this.phase !== 'confirm')) {
+      return;
+    }
+    const before = this.printEvents;
     try {
       window.print();
     } catch {
-      this.toConfirm();
+      // blocked by the browser; the help text explains pop-ups
+    }
+    if (this.printEvents === before && (this.phase === 'ready' || this.phase === 'confirm')) {
+      // A browser that does not fire the print events: carry on as if it had.
+      this.onBeforePrint();
+      this.onAfterPrint();
     }
   }
 
@@ -455,10 +484,8 @@ export class ViewerSession {
     }
     this.phase = 'dead';
     this.stopTimers();
-    if (this.onAfterPrint !== null) {
-      window.removeEventListener('afterprint', this.onAfterPrint);
-      this.onAfterPrint = null;
-    }
+    window.removeEventListener('beforeprint', this.onBeforePrint);
+    window.removeEventListener('afterprint', this.onAfterPrint);
     this.ui.purge();
     for (const url of this.pageUrls) {
       URL.revokeObjectURL(url);
@@ -468,11 +495,7 @@ export class ViewerSession {
     this.kp = null;
     this.chanKey = null;
     this.remainingMs = null;
-    try {
-      window.history.replaceState(null, '', this.env.pathname);
-    } catch {
-      // not fatal
-    }
+    this.hideSessionFromUrl();
     this.ui.destroyed(key);
     this.send({ v: 1, t: 'wiped', reason });
     const ws = this.ws;

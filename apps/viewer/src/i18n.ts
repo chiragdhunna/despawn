@@ -17,7 +17,10 @@ const en = {
   'ready.print': 'Print',
   'ready.selfDestroy': 'This page destroys itself after printing.',
   'ready.help': "Print window didn't open?",
-  'ready.helpBody': 'Allow pop-ups for this site, or press Ctrl+P.',
+  'ready.helpBody':
+    'Press the Print button. If nothing opens, allow pop-ups for this site. Printing with Ctrl+P works too.',
+  'ready.helpHeaders':
+    'To keep a web address off the paper, turn off Headers and footers in the print window under More settings.',
   'ready.page': 'Page',
   'ready.ownerOffline': "The owner's phone is not responding. This page will wipe itself soon.",
   'printing.title': 'Sending to printer. Take the pages from the tray.',
@@ -71,7 +74,10 @@ const hi: Record<StringKey, string> = {
   'ready.print': 'Print',
   'ready.selfDestroy': 'प्रिंट के बाद यह पेज अपने आप मिट जाएगा।',
   'ready.help': 'प्रिंट विंडो नहीं खुली?',
-  'ready.helpBody': 'इस साइट के लिए पॉप-अप की अनुमति दें, या Ctrl+P दबाएँ।',
+  'ready.helpBody':
+    'Print बटन दबाएँ। कुछ न खुले तो इस साइट के लिए पॉप-अप की अनुमति दें। Ctrl+P से भी प्रिंट हो जाएगा।',
+  'ready.helpHeaders':
+    'कागज़ पर वेब पता न आए, इसके लिए प्रिंट विंडो में More settings के अंदर Headers and footers बंद करें।',
   'ready.page': 'पेज',
   'ready.ownerOffline': 'मालिक का फ़ोन जवाब नहीं दे रहा। यह पेज जल्दी ही अपने आप मिट जाएगा।',
   'printing.title': 'प्रिंटर को भेजा जा रहा है। ट्रे से पेज ले लें।',

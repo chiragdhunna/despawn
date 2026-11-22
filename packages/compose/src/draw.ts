@@ -95,10 +95,12 @@ export function drawWatermark(
   ctx.translate(width / 2, height / 2);
   ctx.rotate(g.angle);
   const reach = Math.hypot(width, height);
+  // space tiles by the real text width so neighbours never overlap
+  const stepX = Math.max(g.stepX, Math.ceil(ctx.measureText(text.tile).width + g.fontPx * 3));
   let row = 0;
   for (let y = -reach; y < reach; y += g.stepY, row++) {
-    const offset = row % 2 === 0 ? 0 : g.stepX / 2;
-    for (let x = -reach + offset; x < reach; x += g.stepX) {
+    const offset = row % 2 === 0 ? 0 : stepX / 2;
+    for (let x = -reach + offset; x < reach; x += stepX) {
       ctx.fillText(text.tile, x, y);
     }
   }
@@ -111,8 +113,9 @@ export function drawWatermark(
   const w = ctx.measureText(text.stamp).width;
   const padX = Math.round(small * 0.8);
   const boxH = Math.round(small * 2);
-  const x = width - w - 2 * padX - mmToPx(3, dpi);
-  const y = height - boxH - mmToPx(3, dpi);
+  // 6 mm in from the edge: most printers cannot print the outer 3 to 5 mm
+  const x = width - w - 2 * padX - mmToPx(6, dpi);
+  const y = height - boxH - mmToPx(6, dpi);
   ctx.fillStyle = '#fff';
   ctx.fillRect(x, y, w + 2 * padX, boxH);
   ctx.strokeStyle = '#000';

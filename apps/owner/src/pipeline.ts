@@ -35,7 +35,7 @@ export function defaultOptions(
   return {
     paper: 'A4',
     landscape: firstIsLandscape,
-    layout: 'full',
+    layout: 'fit',
     mode: 'color',
     purpose,
     style: 'selfattested',

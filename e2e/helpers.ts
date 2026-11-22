@@ -102,6 +102,7 @@ export async function stubPrint(page: Page): Promise<void> {
     w.__printCalls = 0;
     window.print = () => {
       w.__printCalls++;
+      window.dispatchEvent(new Event('beforeprint'));
       setTimeout(() => window.dispatchEvent(new Event('afterprint')), 50);
     };
   });

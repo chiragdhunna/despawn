@@ -182,6 +182,7 @@ export class Ui {
       const help = el('details', 'help');
       help.appendChild(el('summary', undefined, this.tr('ready.help')));
       help.appendChild(el('p', 'body', this.tr('ready.helpBody')));
+      help.appendChild(el('p', 'body', this.tr('ready.helpHeaders')));
 
       this.offlineNote = el('p', 'warn');
       this.offlineNote.hidden = true;
